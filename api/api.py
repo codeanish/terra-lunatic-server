@@ -29,6 +29,16 @@ def sync():
     flipside_crypto_client.load()
     return "OK"
 
+@app.route('/scores')
+def get_score_categories():
+    logger.info("get_score_categories()")
+    return json.dumps(flipside_crypto_client.get_scores())
+
+@app.route('/address/<address>/scores', methods=['GET'])
+def get_my_scores(address: str):
+    logger.info(f"get_my_scores({address}")
+    return json.dumps(flipside_crypto_client.get_scores(address))
+
 
 @app.route('/address/<address>/stakedluna', methods=['GET'])
 def get_my_staked_luna(address: str):

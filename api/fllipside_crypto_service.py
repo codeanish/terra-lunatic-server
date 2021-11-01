@@ -1,11 +1,70 @@
 import requests
 import logging
+import settings
 
 logger = logging.getLogger()
 
 class FlipsideCryptoService:
 
     _loaded = False
+
+    def get_scores(self, address: str = None):
+        logger.info(f"FlipsideCryptoService.get_scores({address})")
+        if self._loaded:
+            if address is not None:
+                staked_luna = self.get_staked_luna(address)
+                governance_votes = self.get_governance_votes(address)
+                ust_on_anchor = self.get_ust_deposits_on_anchor(address)
+                pylon_deposits = self.get_pylon_deposits(address)
+                return [{
+                    "name": "Staked Luna",
+                    "description": "Luna staked",
+                    "score": 50,
+                    "complete": True if staked_luna > 0 else False
+                },
+                {
+                    "name": "The Govenor",
+                    "description": "Voted in at least one governance proposal",
+                    "score": 30,
+                    "complete": True if governance_votes > 0 else False
+                },
+                {
+                    "name": "UST depooited in Anchor",
+                    "description": "UST Deposited in Anchor",
+                    "score": 20,
+                    "complete": True if ust_on_anchor > 0 else False
+                },
+                {
+                    "name": "uLP Pylon Deposits",
+                    "description": "uLP deposited in Pylon",
+                    "score": 20,
+                    "complete": True if pylon_deposits > 0 else False
+                }]
+            else:
+                return [{
+                    "name": "Staked Luna",
+                    "description": "Luna staked",
+                    "score": 50,
+                    "complete": False
+                },
+                {
+                    "name": "The Govenor",
+                    "description": "Voted in at least one governance proposal",
+                    "score": 30,
+                    "complete": False
+                },
+                {
+                    "name": "UST depooited in Anchor",
+                    "description": "UST Deposited in Anchor",
+                    "score": 20,
+                    "complete": False
+                },
+                {
+                    "name": "uLP Pylon Deposits",
+                    "description": "uLP deposited in Pylon",
+                    "score": 20,
+                    "complete": False
+                }]
 
     def get_staked_luna(self, address: str = None):
         logger.info(f"FlipsideCryptoService.get_staked_luna({address})")
@@ -52,8 +111,8 @@ class FlipsideCryptoService:
 
     def _load_staked_luna(self):
         logger.info(f"FlipsideCryptoService._load_staked_luna()")
-        first_90k_rows_staked_luna = requests.get("https://api.flipsidecrypto.com/api/v2/queries/81249395-a6da-4745-9442-5e028d19f721/data/latest")
-        second_90k_rows_staked_luna = requests.get("https://api.flipsidecrypto.com/api/v2/queries/f15775eb-3639-4719-832f-4ffb5af81e8f/data/latest")
+        first_90k_rows_staked_luna = requests.get(settings.STAKED_LUNA_URL_1)
+        second_90k_rows_staked_luna = requests.get(settings.STAKED_LUNA_URL_2)
         total_staked_luna = first_90k_rows_staked_luna.json() + second_90k_rows_staked_luna.json()
         staked_luna = {}
         for row in total_staked_luna:
@@ -67,8 +126,8 @@ class FlipsideCryptoService:
         """
         Governance votes currently amount to 13k rows, within the 99k limit
         """
-        logger.info(f"FlipsideCryptoService.load_governance_votes()")
-        response = requests.get("https://api.flipsidecrypto.com/api/v2/queries/e10dafa5-67fc-41c7-9df6-496f8350a605/data/latest")
+        logger.info(f"FlipsideCryptoService._load_governance_votes()")
+        response = requests.get(settings.GOVERNANCE_VOTES_URL)
         votes_by_address = {}
         for address in response.json():
             votes_by_address[address["ADDRESS"]] = votes_by_address.get(address.get("ADDRESS")) + address.get("VOTES") if votes_by_address.get(address.get("ADDRESS")) else address.get("VOTES")
@@ -78,8 +137,8 @@ class FlipsideCryptoService:
         """
         UST Deposits in Anchor, at time of writing, produces approximately 68k rows, within the 99k limit
         """
-        logger.info(f"FlipsideCryptoService.load_ust_deposits_to_anchor()")
-        response = requests.get("https://api.flipsidecrypto.com/api/v2/queries/74651668-7392-4667-8384-0ef7edf7fa59/data/latest")
+        logger.info(f"FlipsideCryptoService._load_ust_deposits_to_anchor()")
+        response = requests.get(settings.DEPOSITS_TO_ANCHOR_URL)
         all_deposits = response.json()
         ust_deposits = {}
         for deposit in all_deposits:
@@ -88,7 +147,7 @@ class FlipsideCryptoService:
 
     def _load_pylon_pool_deposits(self):
         logger.info(f"FlipsideCryptoService._load_pylon_pool_deposits")
-        response = requests.get("https://api.flipsidecrypto.com/api/v2/queries/5925c7c1-37ca-43a2-9c0d-7aba28170c71/data/latest")
+        response = requests.get(settings.PYLON_DEPOSITS_URL)
         all_pool_deposits = response.json()
         pylon_deposits = {}
         for deposit in all_pool_deposits:
