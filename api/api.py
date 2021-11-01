@@ -5,6 +5,7 @@ import json
 import logging
 from sys import stdout
 from flask_cors import CORS
+import werkzeug
 
 app = flask.Flask(__name__)
 CORS(app)
@@ -22,10 +23,18 @@ def health_check():
     return "OK"
 
 
+@app.route('/sync', methods=['PUT'])
+def sync():
+    logger.info(f"sync()")
+    flipside_crypto_client.load()
+    return "OK"
+
+
 @app.route('/address/<address>/stakedluna', methods=['GET'])
 def get_my_staked_luna(address: str):
     logger.info(f"get_my_staked_luna({address})")
     return json.dumps(flipside_crypto_client.get_staked_luna(address))
+
 
 @app.route('/address/<address>/governancevotes', methods=['GET'])
 def get_my_governance_votes(address: str):
@@ -39,10 +48,17 @@ def get_my_ust_deposits_on_anchor(address: str):
     return json.dumps(flipside_crypto_client.get_ust_deposits_on_anchor(address))
 
 
+@app.route('/address/<address>/pylonmimeustdeposits', methods=['GET'])
+def get_my_pylon_mime_ust_deposits(address: str):
+    logger.info(f"get_my_pylon_mime_ust_deposits({address})")
+    return json.dumps(flipside_crypto_client.get_pylon_deposits(address))
+
+
 @app.route('/stakedluna', methods=['GET'])
 def get_staked_luna():
     logger.info(f"get_staked_luna()")
     return json.dumps(flipside_crypto_client.get_staked_luna())
+
 
 @app.route('/ustdeposits', methods=['GET'])
 def get_ust_deposits_on_anchor():
@@ -54,6 +70,12 @@ def get_ust_deposits_on_anchor():
 def get_governance_votes():
     logger.info(f"get_governance_votes()")
     return json.dumps(flipside_crypto_client.get_governance_votes())
+
+
+@app.route('/pylonmimeustdeposits', methods=['GET'])
+def get_pylon_mime_ust_deposits():
+    logger.info(f"get_pylon_mime_ust_deposits()")
+    return json.dumps(flipside_crypto_client.get_pylon_deposits())
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')

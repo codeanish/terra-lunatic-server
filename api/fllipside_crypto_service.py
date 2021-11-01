@@ -35,12 +35,19 @@ class FlipsideCryptoService:
         self.load()
         return self.get_governance_votes()
 
+    def get_pylon_deposits(self, address: str = None):
+        logger.info(f"FlipsideCryptoService.get_pylon_deposits({address})")
+        if self._loaded:
+            if address:
+                return self._pylon_pool_deposits.get(address) if self._pylon_pool_deposits.get(address) else 0
+            return self._pylon_pool_deposits
 
     def load(self):
         logger.info(f"FlipsideCryptoService.load()")
         self._staked_luna = self._load_staked_luna()
         self._ust_deposits = self._load_ust_deposits_to_anchor()
         self._governance_votes = self._load_governance_votes()
+        self._pylon_pool_deposits = self._load_pylon_pool_deposits()
         self._loaded = True
 
     def _load_staked_luna(self):
@@ -78,3 +85,12 @@ class FlipsideCryptoService:
         for deposit in all_deposits:
             ust_deposits[deposit["DEPOSITOR"]] = ust_deposits.get(deposit.get("DEPOSITOR")) + deposit.get("DEPOSIT_AMOUNT") if ust_deposits.get(deposit.get("DEPOSITOR")) else deposit.get("DEPOSIT_AMOUNT")
         return ust_deposits
+
+    def _load_pylon_pool_deposits(self):
+        logger.info(f"FlipsideCryptoService._load_pylon_pool_deposits")
+        response = requests.get("https://api.flipsidecrypto.com/api/v2/queries/5925c7c1-37ca-43a2-9c0d-7aba28170c71/data/latest")
+        all_pool_deposits = response.json()
+        pylon_deposits = {}
+        for deposit in all_pool_deposits:
+            pylon_deposits[deposit["ADDRESS"]] = pylon_deposits.get(deposit.get("ADDRESS")) + deposit.get("AMOUNT") if pylon_deposits.get(deposit.get("ADDRESS")) else deposit.get("AMOUNT")
+        return pylon_deposits

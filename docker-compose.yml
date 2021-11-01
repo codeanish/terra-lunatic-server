@@ -1,9 +1,17 @@
 version: "3.9"
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.api
     ports:
       - 5000:5000
+  sync:
+    build:
+      context: .
+      dockerfile: Dockerfile.sync
+    depends_on:
+      - api
 
 volumes:
   database-data:
