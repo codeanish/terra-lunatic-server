@@ -113,7 +113,8 @@ class FlipsideCryptoService:
         logger.info(f"FlipsideCryptoService._load_staked_luna()")
         first_90k_rows_staked_luna = requests.get(settings.STAKED_LUNA_URL_1)
         second_90k_rows_staked_luna = requests.get(settings.STAKED_LUNA_URL_2)
-        total_staked_luna = first_90k_rows_staked_luna.json() + second_90k_rows_staked_luna.json()
+        third_90k_rows_staked_luna = requests.get(settings.STAKED_LUNA_URL_3)
+        total_staked_luna = first_90k_rows_staked_luna.json() + second_90k_rows_staked_luna.json() + third_90k_rows_staked_luna.json()
         staked_luna = {}
         for row in total_staked_luna:
             if row["ACTION"] == "undelegate":
